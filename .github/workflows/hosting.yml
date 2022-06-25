@@ -1,0 +1,24 @@
+name: Hosting
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  asciidoctor_job:
+    runs-on: ubuntu-latest
+    name: Deploy index.html
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Markdown To HTML
+        uses: docker://pandoc/core:2.9
+        with:
+          args: index.md -t html -o ./build/index.html
+      - name: Publish to AWS S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          FROM_PATH: './build'
+        run: |
+          aws s3 cp ./build/index.html --region ${{ secrets.AWS_REGION }} ${{ secrets.AWS_S3_BUCKET_PATH }}
